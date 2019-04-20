@@ -1,3 +1,3 @@
-# Heroku Storage 
+# Heroku Storage tool
 
-Server urility to store temp data with API.
+Server utility to store temp data with API.
