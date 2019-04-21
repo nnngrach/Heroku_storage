@@ -13,38 +13,36 @@ class StorageController {
     
     // MARK: GET
     
-    func getAll(_ req: Request) throws -> Future<[Storage]> {
-        return Storage
+    func getAll(_ req: Request) throws -> Future<[Record]> {
+        return Record
             .query(on: req)
-            .sort(\.unixTime, .ascending)
+            .sort(\Record.unixTime, .descending)
             .all()
     }
     
     
     
-    
-    func getAllByTitle(_ req: Request) throws -> Future<[Storage]>  {
-        
+    func getAllByTitle(_ req: Request) throws -> Future<[Record]>  {
+
         let title = try req.parameters.next(String.self)
-        
-        return Storage
+
+        return Record
             .query(on: req)
-            .filter(\Storage.data == title)
-            .sort(\.unixTime, .ascending)
+            .filter(\Record.title == title)
+            .sort(\.unixTime, .descending)
             .all()
     }
     
     
     
-    
-    func getLastByTitle(_ req: Request) throws -> Future<Storage>  {
-        
+    func getLastByTitle(_ req: Request) throws -> Future<Record>  {
+
         let title = try req.parameters.next(String.self)
         
-        return Storage
+        return Record
             .query(on: req)
-            .filter(\Storage.data == title)
-            .sort(\.unixTime, .ascending)
+            .filter(\Record.title == title)
+            .sort(\Record.unixTime, .descending)
             .first()
             .unwrap(or: Abort.init(
                 HTTPResponseStatus.custom(code: 501, reasonPhrase: "Uwarping MapData error")))
@@ -52,14 +50,13 @@ class StorageController {
     
     
     
-    
-    func getById(_ req: Request) throws -> Future<Storage> {
+    func getById(_ req: Request) throws -> Future<Record> {
         
         let objectId = try req.parameters.next(Int.self)
         
-        return Storage
+        return Record
             .find(objectId, on: req)
-            .map(to: Storage.self) { record in
+            .map(to: Record.self) { record in
                 guard let record = record else { throw Abort.init(HTTPStatus.notFound) }
                 return record
         }
@@ -68,33 +65,28 @@ class StorageController {
     
     
     
-    
-    
     // MARK: POST
     
-    
-    func create(_ req: Request) throws -> Future<Storage> {
-        return try req.content.decode(Storage.self).flatMap { record in
+    func create(_ req: Request) throws -> Future<Record> {
+        return try req.content.decode(Record.self).flatMap { record in
             return record.save(on: req)
         }
     }
     
     
     
- 
-    
     func restoreFromJson(_ req: Request) throws -> Future<HTTPStatus> {
         
         // Parse and check records received JSON
-        return try req.content.decode([Storage].self).map { records -> HTTPStatus in
+        return try req.content.decode([Record].self).map { records -> HTTPStatus in
         
             // If ok, then clean all records from data base
             let currentUnixTime = Int(Date().timeIntervalSince1970)
             self.eraseAllOlderThat(timestamp: currentUnixTime, req)
             
             // And add new record to it
-            records.map {
-                $0.save(on: req)
+            records.map { record in
+                return Record(id: nil, title: record.title, unixTime: record.unixTime, data: record.data).save(on: req)
             }
             
             return HTTPStatus.init(statusCode: 200)
@@ -104,12 +96,10 @@ class StorageController {
     
     
     
-    
-    
     // MARK: DELETE
     
     func delete(_ req: Request) throws -> Future<HTTPStatus> {
-        return try req.parameters.next(Storage.self).flatMap { record in
+        return try req.parameters.next(Record.self).flatMap { record in
             return record.delete(on: req)
             }.transform(to: .ok)
     }
@@ -120,7 +110,7 @@ class StorageController {
         
         let objectId = try req.parameters.next(Int.self)
         
-        return Storage
+        return Record
             .find(objectId, on: req)
             .flatMap { record -> Future<Void> in
                 guard let record = record else { throw Abort.init(HTTPStatus.notFound) }
@@ -134,10 +124,10 @@ class StorageController {
         
         let title = try req.parameters.next(String.self)
         
-        return Storage
+        return Record
             .query(on: req)
-            .filter(\Storage.data == title)
-            .sort(\.unixTime, .ascending)
+            .filter(\Record.title == title)
+            .sort(\Record.unixTime, .descending)
             .first()
             .unwrap(or: Abort.init(
                 HTTPResponseStatus.custom(code: 501, reasonPhrase: "Uwarping MapData error")))
@@ -145,7 +135,6 @@ class StorageController {
                 return record.delete(on: req)
             }.transform(to: .ok)
     }
-    
     
     
     
@@ -160,11 +149,10 @@ class StorageController {
     
     
     
-    
     private func eraseAllOlderThat(timestamp: Int, _ req: Request) {
-        Storage
+        Record
             .query(on: req)
-            .filter(\Storage.unixTime <= timestamp)
+            .filter(\Record.unixTime <= timestamp)
             .all()
             .map { records in
                 records.map { record in
@@ -180,10 +168,10 @@ class StorageController {
         let timestamp = try req.parameters.next(Int.self)
         let title = try req.parameters.next(String.self)
         
-        Storage
+        Record
             .query(on: req)
-            .filter(\Storage.data == title)
-            .filter(\Storage.unixTime <= timestamp)
+            .filter(\Record.title == title)
+            .filter(\Record.unixTime <= timestamp)
             .all()
             .map { records in
                 records.map { record in
@@ -193,6 +181,5 @@ class StorageController {
         
         return HTTPStatus.init(statusCode: 200)
     }
-        
         
 }
