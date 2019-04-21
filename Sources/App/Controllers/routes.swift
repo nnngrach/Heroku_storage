@@ -5,6 +5,11 @@ public func routes(_ router: Router) throws {
     
     let storage = StorageController()
     
+    router.get(use: storage.hello)
+    
+    
+    
+    router.get("all", use: storage.getAll)
     
     router.get("all", use: storage.getAll)
     

@@ -10,6 +10,14 @@ import FluentSQLite
 
 class StorageController {
     
+    func hello(_ req: Request) -> String {
+        return """
+        This is a data storage app for AnyGIS server
+        https://github.com/nnngrach/AnyGIS_server
+        """
+    }
+    
+    
     
     // MARK: GET
     
