@@ -8,9 +8,6 @@ public func routes(_ router: Router) throws {
     router.get(use: storage.hello)
     
     
-    
-    router.get("all", use: storage.getAll)
-    
     router.get("all", use: storage.getAll)
     
     router.get("allByTitle", String.parameter, use: storage.getAllByTitle)
@@ -23,7 +20,6 @@ public func routes(_ router: Router) throws {
     router.post("record", use: storage.create)
     
     router.post("restoreFromJson", use: storage.restoreFromJson)
-    
     
     
     router.delete("record", use: storage.delete)
